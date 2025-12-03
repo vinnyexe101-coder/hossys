@@ -161,6 +161,123 @@ public class HospitalSystem {
         bill.applyPayment(payment);
         patient.discharge();
     }
+    private static void handleDoctorFlow(Scanner sc, Patient patient, List<Doctor> doctors,
+                                     List<Nurse> nurses, Pharmacy pharmacy,
+                                     Map<Integer, DiseaseInfo> diseaseMap, Billing bill) {
+    System.out.println("\n--- Disease / Reason for visit ---");
+    for (Map.Entry<Integer, DiseaseInfo> e : diseaseMap.entrySet()) {
+        System.out.println(e.getKey() + ". " + e.getValue().diseaseName);
+    }
+
+    int choice;
+    while (true) {
+        System.out.print("Choose disease number (or 0 for General): ");
+        try {
+            choice = Integer.parseInt(sc.nextLine().trim());
+            if (choice == 0) choice = 1;
+            if (diseaseMap.containsKey(choice)) break;
+        } catch (NumberFormatException ignored) {}
+        System.out.println("Invalid choice.");
+    }
+
+    DiseaseInfo disease = diseaseMap.get(choice);
+    patient.doctor = doctors.get(disease.doctorIndex);
+    patient.doctor.provideService(patient);
+
+    patient.nurses.clear();
+    for (int ni : disease.nurseIndices) {
+        if (ni >= 0 && ni < nurses.size()) patient.nurses.add(nurses.get(ni));
+    }
+    for (Nurse n : patient.nurses) n.provideService(patient);
+
+    System.out.println("Ward: " + disease.ward);
+
+    // Prescription step
+    if (!disease.recommendedMedsAndDose.isEmpty()) {
+        System.out.print("Add recommended medicines to bill? (yes/no): ");
+        if (sc.nextLine().trim().equalsIgnoreCase("yes")) {
+            for (Map.Entry<String, String> med : disease.recommendedMedsAndDose.entrySet()) {
+                double price = pharmacy.getPrice(med.getKey());
+                bill.addMedicine(med.getKey() + " (" + med.getValue() + ")", 1, price);
+                System.out.println("1 x " + med.getKey() + " added to bill.");
+            }
+        }
+    }
+
+    bill.addService("Doctor Consultation (" + patient.doctor.getSpecialty() + ")", 500);
+
+    // 🔥 NEW STEP: Ask if patient wants more meds before services
+    System.out.print("\nDo you want to buy more medicines from pharmacy? (yes/no): ");
+    if (sc.nextLine().trim().equalsIgnoreCase("yes")) {
+        pharmacy.provideService(patient);
+        pharmacy.showMedicinesAlphabetical();
+        System.out.print("Enter medicine number: ");
+        int medChoice = Integer.parseInt(sc.nextLine().trim());
+        String med = pharmacy.getMedicineByIndex(medChoice);
+        double price = pharmacy.getPrice(med);
+        bill.addMedicine(med, 1, price);
+        System.out.println("1 x " + med + " added to bill.");
+    }
+}
+private static void handleDoctorFlow(Scanner sc, Patient patient, List<Doctor> doctors,
+                                     List<Nurse> nurses, Pharmacy pharmacy,
+                                     Map<Integer, DiseaseInfo> diseaseMap, Billing bill) {
+    System.out.println("\n--- Disease / Reason for visit ---");
+    for (Map.Entry<Integer, DiseaseInfo> e : diseaseMap.entrySet()) {
+        System.out.println(e.getKey() + ". " + e.getValue().diseaseName);
+    }
+
+    int choice;
+    while (true) {
+        System.out.print("Choose disease number (or 0 for General): ");
+        try {
+            choice = Integer.parseInt(sc.nextLine().trim());
+            if (choice == 0) choice = 1;
+            if (diseaseMap.containsKey(choice)) break;
+        } catch (NumberFormatException ignored) {}
+        System.out.println("Invalid choice.");
+    }
+
+    DiseaseInfo disease = diseaseMap.get(choice);
+    patient.doctor = doctors.get(disease.doctorIndex);
+    patient.doctor.provideService(patient);
+
+    patient.nurses.clear();
+    for (int ni : disease.nurseIndices) {
+        if (ni >= 0 && ni < nurses.size()) patient.nurses.add(nurses.get(ni));
+    }
+    for (Nurse n : patient.nurses) n.provideService(patient);
+
+    System.out.println("Ward: " + disease.ward);
+
+    // Prescription step
+    if (!disease.recommendedMedsAndDose.isEmpty()) {
+        System.out.print("Add recommended medicines to bill? (yes/no): ");
+        if (sc.nextLine().trim().equalsIgnoreCase("yes")) {
+            for (Map.Entry<String, String> med : disease.recommendedMedsAndDose.entrySet()) {
+                double price = pharmacy.getPrice(med.getKey());
+                bill.addMedicine(med.getKey() + " (" + med.getValue() + ")", 1, price);
+                System.out.println("1 x " + med.getKey() + " added to bill.");
+            }
+        }
+    }
+
+    bill.addService("Doctor Consultation (" + patient.doctor.getSpecialty() + ")", 500);
+
+    // 🔥 NEW STEP: Ask if patient wants more meds before services
+    System.out.print("\nDo you want to buy more medicines from pharmacy? (yes/no): ");
+    if (sc.nextLine().trim().equalsIgnoreCase("yes")) {
+        pharmacy.provideService(patient);
+        pharmacy.showMedicinesAlphabetical();
+        System.out.print("Enter medicine number: ");
+        int medChoice = Integer.parseInt(sc.nextLine().trim());
+        String med = pharmacy.getMedicineByIndex(medChoice);
+        double price = pharmacy.getPrice(med);
+        bill.addMedicine(med, 1, price);
+        System.out.println("1 x " + med + " added to bill.");
+    }
+}
+
 
     // ------------------- Setup Methods -------------------
     private static List<Doctor> setupDoctors() {
@@ -188,3 +305,4 @@ public class HospitalSystem {
         return map;
     }
 }
+
